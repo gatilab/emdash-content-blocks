@@ -1,0 +1,148 @@
+---
+/**
+ * Expert opinion: a quote panel with the author's photo, name and role.
+ */
+import "./styles/base.css";
+
+import { initial } from "../format.js";
+import { normalizeOpinion } from "../normalize.js";
+import type { OpinionBlock } from "../types.js";
+import Icon from "./parts/Icon.astro";
+
+interface Props {
+	node: OpinionBlock;
+}
+
+const opinion = normalizeOpinion(Astro.props.node);
+const hasAuthor = Boolean(opinion.name || opinion.role || opinion.avatar);
+// The name is printed beside the photo, so the photo is decorative when a name exists.
+const avatarAlt = opinion.name ? "" : (opinion.avatar?.alt ?? "");
+---
+
+{
+	opinion.bodyHtml && (
+		<figure class="gtcb not-prose gtcb-opinion">
+			<Icon name="quote" class="gtcb-opinion__mark" size={28} />
+			<blockquote class="gtcb-opinion__quote gtcb-rich" set:html={opinion.bodyHtml} />
+			{hasAuthor && (
+				<figcaption class="gtcb-opinion__author">
+					{opinion.avatar ? (
+						<img
+							class="gtcb-opinion__avatar"
+							src={opinion.avatar.src}
+							alt={avatarAlt}
+							width="48"
+							height="48"
+							loading="lazy"
+							decoding="async"
+						/>
+					) : (
+						opinion.name && (
+							<span class="gtcb-opinion__avatar gtcb-opinion__avatar--initial" aria-hidden="true">
+								{initial(opinion.name)}
+							</span>
+						)
+					)}
+					<span class="gtcb-opinion__meta">
+						{opinion.name && <span class="gtcb-opinion__name">{opinion.name}</span>}
+						{opinion.role && <span class="gtcb-opinion__role">{opinion.role}</span>}
+					</span>
+				</figcaption>
+			)}
+		</figure>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-opinion {
+		padding: 24px 28px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 14px;
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__mark {
+		display: block;
+		width: 28px;
+		height: 28px;
+		margin: 0 0 12px;
+		color: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__quote {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-19);
+		font-style: normal;
+		font-weight: 400;
+		line-height: 1.6;
+		quotes: none;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__quote p::before,
+	.gtcb.gtcb-opinion .gtcb-opinion__quote p::after {
+		content: none;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__author {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 20px 0 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__avatar {
+		display: block;
+		flex: none;
+		width: 48px;
+		height: 48px;
+		margin: 0;
+		border-radius: 50%;
+		background: var(--gtcb-tint);
+		object-fit: cover;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__avatar--initial {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--gtcb-accent-soft);
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-19);
+		font-weight: 600;
+		line-height: 1;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__meta {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__name {
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-opinion .gtcb-opinion__role {
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		line-height: 1.4;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-opinion {
+			padding: 20px;
+		}
+
+		.gtcb.gtcb-opinion .gtcb-opinion__quote {
+			font-size: var(--gtcb-fs-16);
+		}
+	}
+</style>

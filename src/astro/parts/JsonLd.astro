@@ -1,0 +1,13 @@
+---
+/** Inline JSON-LD script. The payload is escaped so it cannot close the element. */
+import { serializeJsonLd } from "../../schema.js";
+import type { JsonLd as JsonLdData } from "../../schema.js";
+
+interface Props {
+	data: JsonLdData;
+}
+
+const json = serializeJsonLd(Astro.props.data);
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

@@ -1,0 +1,91 @@
+---
+/**
+ * Stats: headline numbers in a responsive grid. Marked up as a description
+ * list so each value is announced with its label.
+ */
+import "./styles/base.css";
+
+import { normalizeStats } from "../normalize.js";
+import type { StatsBlock } from "../types.js";
+
+interface Props {
+	node: StatsBlock;
+}
+
+const { items } = normalizeStats(Astro.props.node);
+---
+
+{
+	items.length > 0 && (
+		<div class="gtcb not-prose gtcb-stats">
+			<dl class="gtcb-stats__grid">
+				{items.map((item) => (
+					<div class="gtcb-stats__item">
+						<dt class="gtcb-stats__label">{item.label}</dt>
+						<dd class="gtcb-stats__value">
+							{item.icon && (
+								<span class="gtcb-stats__icon" aria-hidden="true">
+									{item.icon}
+								</span>
+							)}
+							<span class="gtcb-stats__number">{`${item.prefix ?? ""}${item.value}${item.suffix ?? ""}`}</span>
+						</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-stats .gtcb-stats__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+		gap: 12px;
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-stats .gtcb-stats__item {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+		padding: 20px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: var(--gtcb-radius);
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-stats .gtcb-stats__value {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		order: -1;
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-stats .gtcb-stats__icon {
+		font-size: var(--gtcb-fs-21);
+		line-height: 1;
+	}
+
+	.gtcb.gtcb-stats .gtcb-stats__number {
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-28);
+		font-weight: 600;
+		line-height: 1.15;
+		font-variant-numeric: tabular-nums;
+		overflow-wrap: anywhere;
+	}
+
+	.gtcb.gtcb-stats .gtcb-stats__label {
+		margin: 0;
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		font-weight: 400;
+		line-height: 1.45;
+	}
+</style>

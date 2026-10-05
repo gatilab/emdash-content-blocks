@@ -1,0 +1,122 @@
+---
+/**
+ * Pros and cons as two labeled lists. Shared by the `prosCons` block and the
+ * product review. Color is never the only signal: each column has a text
+ * label and every item has a check or cross mark.
+ */
+import type { NormalizedTextRow } from "../../normalize.js";
+import Mark from "./Mark.astro";
+
+interface Props {
+	pros: NormalizedTextRow[];
+	cons: NormalizedTextRow[];
+	/** Rendered inside another card: tinted columns instead of bordered panels. */
+	nested?: boolean;
+	prosLabel?: string;
+	consLabel?: string;
+}
+
+const { pros, cons, nested = false, prosLabel = "Pros", consLabel = "Cons" } = Astro.props;
+const columns = [
+	{ kind: "positive" as const, modifier: "pros", label: prosLabel, rows: pros },
+	{ kind: "negative" as const, modifier: "cons", label: consLabel, rows: cons },
+].filter((column) => column.rows.length > 0);
+---
+
+{
+	columns.length > 0 && (
+		<div class:list={["gtcb-pc", nested && "gtcb-pc--nested", columns.length === 1 && "gtcb-pc--single"]}>
+			{columns.map((column) => (
+				<div class:list={["gtcb-pc__col", `gtcb-pc__col--${column.modifier}`]}>
+					<p class="gtcb-pc__title">
+						<Mark kind={column.kind} />
+						<span>{column.label}</span>
+					</p>
+					<ul class="gtcb-pc__list">
+						{column.rows.map((row) => (
+							<li class="gtcb-pc__item">
+								<Mark kind={column.kind} />
+								<span class="gtcb-pc__text">{row.text}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			))}
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb .gtcb-pc {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+
+	@container (min-width: 520px) {
+		.gtcb .gtcb-pc:not(.gtcb-pc--single) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	.gtcb .gtcb-pc__col {
+		min-width: 0;
+		padding: 20px 24px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: var(--gtcb-radius);
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb .gtcb-pc--nested .gtcb-pc__col {
+		border: 0;
+		background: var(--gtcb-tint);
+	}
+
+	.gtcb .gtcb-pc__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0 0 12px;
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1.4;
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb .gtcb-pc__list {
+		display: grid;
+		gap: 10px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb .gtcb-pc__item {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin: 0;
+		padding: 0;
+		line-height: 1.55;
+	}
+
+	.gtcb .gtcb-pc__item::before,
+	.gtcb .gtcb-pc__item::marker {
+		content: none;
+	}
+
+	.gtcb .gtcb-pc__item .gtcb-mark {
+		margin-top: 0.12em;
+	}
+
+	.gtcb .gtcb-pc__text {
+		min-width: 0;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb .gtcb-pc__col {
+			padding: 18px 20px;
+		}
+	}
+</style>

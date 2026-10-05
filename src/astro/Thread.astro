@@ -1,0 +1,230 @@
+---
+/**
+ * Social thread mock-up with a generic look (no platform logos or
+ * trademarks). Post text is plain text and keeps its line breaks.
+ */
+import "./styles/base.css";
+
+import { formatCount, initial } from "../format.js";
+import { normalizeThread } from "../normalize.js";
+import type { ThreadBlock } from "../types.js";
+import Icon from "./parts/Icon.astro";
+
+interface Props {
+	node: ThreadBlock;
+}
+
+const { posts } = normalizeThread(Astro.props.node);
+const locale = Astro.currentLocale;
+
+const METRICS = [
+	{ field: "replies", icon: "reply", label: "Replies" },
+	{ field: "reposts", icon: "repost", label: "Reposts" },
+	{ field: "likes", icon: "like", label: "Likes" },
+] as const;
+---
+
+{
+	posts.length > 0 && (
+		<div class="gtcb not-prose gtcb-thread">
+			<ol class="gtcb-thread__list" aria-label="Thread">
+				{posts.map((post, index) => {
+					const metrics = METRICS.flatMap((metric) => {
+						const value = post[metric.field];
+						return value === undefined ? [] : [{ ...metric, value: formatCount(value, locale) }];
+					});
+					return (
+						<li class:list={["gtcb-thread__post", index === posts.length - 1 && "gtcb-thread__post--last"]}>
+							<div class="gtcb-thread__rail" aria-hidden="true">
+								<span class="gtcb-thread__avatar">{initial(post.name || post.handle)}</span>
+							</div>
+							<div class="gtcb-thread__body">
+								<p class="gtcb-thread__meta">
+									{post.name && <span class="gtcb-thread__name">{post.name}</span>}
+									{post.verified && (
+										<span class="gtcb-thread__verified">
+											<Icon name="verified" size={16} />
+											<span class="gtcb-sr-only">Verified account</span>
+										</span>
+									)}
+									{post.handle && <span class="gtcb-thread__handle">{post.handle}</span>}
+									{post.time && (
+										<span class="gtcb-thread__time">
+											<span aria-hidden="true">· </span>
+											{post.time}
+										</span>
+									)}
+								</p>
+								{post.text && <p class="gtcb-thread__text">{post.text}</p>}
+								{metrics.length > 0 && (
+									<ul class="gtcb-thread__metrics">
+										{metrics.map((metric) => (
+											<li class="gtcb-thread__metric">
+												<Icon name={metric.icon} size={16} />
+												<span class="gtcb-sr-only">{metric.label}: </span>
+												<span>{metric.value}</span>
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+						</li>
+					);
+				})}
+			</ol>
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-thread {
+		padding: 20px 24px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 14px;
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__post {
+		display: grid;
+		grid-template-columns: 40px minmax(0, 1fr);
+		gap: 12px;
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__post::before {
+		content: none;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__rail::after {
+		content: "";
+		flex: 1 1 auto;
+		width: 2px;
+		min-height: 12px;
+		margin: 6px 0;
+		border-radius: 1px;
+		background: var(--gtcb-hairline);
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__post--last .gtcb-thread__rail::after {
+		content: none;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__avatar {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		background: var(--gtcb-accent-soft);
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__body {
+		min-width: 0;
+		padding-bottom: 20px;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__post--last .gtcb-thread__body {
+		padding-bottom: 0;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 2px 6px;
+		margin: 0 0 4px;
+		min-height: 24px;
+		font-size: var(--gtcb-fs-14);
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__name {
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__verified {
+		display: inline-flex;
+		color: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__verified .gtcb-icon__check {
+		stroke: var(--gtcb-on-accent);
+		stroke-width: 2.25;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__handle,
+	.gtcb.gtcb-thread .gtcb-thread__time {
+		color: var(--gtcb-muted);
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__text {
+		margin: 0;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		line-height: 1.55;
+		white-space: pre-line;
+		overflow-wrap: anywhere;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__metrics {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 24px;
+		margin: 12px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__metric {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gtcb.gtcb-thread .gtcb-thread__metric::before {
+		content: none;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-thread {
+			padding: 18px 16px;
+		}
+
+		.gtcb.gtcb-thread .gtcb-thread__post {
+			grid-template-columns: 36px minmax(0, 1fr);
+			gap: 10px;
+		}
+
+		.gtcb.gtcb-thread .gtcb-thread__avatar {
+			width: 36px;
+			height: 36px;
+		}
+	}
+</style>

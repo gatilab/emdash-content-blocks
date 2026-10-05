@@ -1,0 +1,64 @@
+---
+/**
+ * Decorative line icons (24px grid, currentColor). Always aria-hidden: callers
+ * provide the accessible text next to the icon.
+ */
+export type IconName =
+	| "info"
+	| "success"
+	| "warning"
+	| "danger"
+	| "tip"
+	| "note"
+	| "quote"
+	| "reply"
+	| "repost"
+	| "like"
+	| "verified"
+	| "arrow"
+	| "external";
+
+interface Props {
+	name: IconName;
+	class?: string;
+	size?: number;
+}
+
+const ICONS: Record<IconName, string> = {
+	info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/>',
+	success: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.4 2.4 2.4 4.6-5"/>',
+	warning:
+		'<path d="M10.3 4.3 2.7 17.4a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4"/><path d="M12 16.9h.01"/>',
+	danger:
+		'<path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3Z"/><path d="M12 7.8v5"/><path d="M12 16.3h.01"/>',
+	tip: '<path d="M9.2 18h5.6"/><path d="M10.2 21h3.6"/><path d="M12 3a6 6 0 0 0-3.7 10.7c.7.6 1.1 1.4 1.2 2.3h5c.1-.9.5-1.7 1.2-2.3A6 6 0 0 0 12 3Z"/>',
+	note: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/>',
+	quote:
+		'<path fill="currentColor" stroke="none" d="M10 6.2C6.8 7.3 4.6 10 4.6 13.6V18h5.6v-5.6H7.5c.3-2 1.4-3.3 3.2-4ZM19.4 6.2c-3.2 1.1-5.4 3.8-5.4 7.4V18h5.6v-5.6h-2.7c.3-2 1.4-3.3 3.2-4Z"/>',
+	reply: '<path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.3-4.2A7.5 7.5 0 1 1 20 11.5Z"/>',
+	repost:
+		'<path d="m16.5 3 3 3-3 3"/><path d="M4.5 11V9.5a3.5 3.5 0 0 1 3.5-3.5h11.5"/><path d="m7.5 21-3-3 3-3"/><path d="M19.5 13v1.5a3.5 3.5 0 0 1-3.5 3.5H4.5"/>',
+	like: '<path d="M12 19.5s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.6-7.5 10-7.5 10Z"/>',
+	verified:
+		'<path class="gtcb-icon__seal" fill="currentColor" stroke="none" d="m12 2.4 2.5 1.8 3.1-.1 1 2.9 2.5 1.9-1 2.9 1 2.9-2.5 1.9-1 2.9-3.1-.1L12 21.6l-2.5-1.8-3.1.1-1-2.9-2.5-1.9 1-2.9-1-2.9 2.5-1.9 1-2.9 3.1.1Z"/><path class="gtcb-icon__check" d="m8.6 12.2 2.3 2.3 4.5-4.8"/>',
+	arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+	external: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>',
+};
+
+const { name, class: className, size = 20 } = Astro.props;
+---
+
+<svg
+	class:list={["gtcb-icon", `gtcb-icon--${name}`, className]}
+	width={size}
+	height={size}
+	viewBox="0 0 24 24"
+	fill="none"
+	stroke="currentColor"
+	stroke-width="1.75"
+	stroke-linecap="round"
+	stroke-linejoin="round"
+	aria-hidden="true"
+	focusable="false"
+	set:html={ICONS[name]}
+/>

@@ -1,0 +1,371 @@
+---
+/**
+ * Checklist. With `interactive` on, items are real checkboxes; a small script
+ * adds a live progress count and remembers ticks in localStorage under the
+ * block's `_key`. Without JavaScript the checkboxes still work, the progress
+ * row stays hidden and nothing is stored. With `interactive` off, the list is
+ * static and each item shows a done / to-do mark.
+ */
+import "./styles/base.css";
+
+import { normalizeChecklist } from "../normalize.js";
+import type { ChecklistBlock } from "../types.js";
+
+interface Props {
+	node: ChecklistBlock;
+}
+
+const checklist = normalizeChecklist(Astro.props.node);
+const total = checklist.items.length;
+const initiallyDone = checklist.items.filter((item) => item.checked).length;
+const CHECK = '<path d="m4.5 12.5 4.5 4.5 10-10"/>';
+---
+
+{
+	total > 0 && (
+		<div
+			class:list={["gtcb not-prose gtcb-checklist", checklist.interactive && "gtcb-checklist--interactive"]}
+			data-gtcb-checklist={checklist.interactive ? "" : undefined}
+			data-gtcb-key={checklist.interactive && checklist.key ? checklist.key : undefined}
+		>
+			{checklist.title && <p class="gtcb-heading gtcb-checklist__title">{checklist.title}</p>}
+
+			{checklist.interactive && (
+				<div class="gtcb-checklist__progress" data-gtcb-progress hidden>
+					<p class="gtcb-checklist__count" aria-live="polite">
+						<span data-gtcb-done>{initiallyDone}</span> of {total} done
+					</p>
+					<button type="button" class="gtcb-checklist__reset" data-gtcb-reset>
+						Reset
+					</button>
+					<span class="gtcb-checklist__bar" aria-hidden="true">
+						<span class="gtcb-checklist__bar-fill" data-gtcb-bar />
+					</span>
+				</div>
+			)}
+
+			<ul class="gtcb-checklist__list">
+				{checklist.items.map((item, index) =>
+					checklist.interactive ? (
+						<li class="gtcb-checklist__row">
+							<label class="gtcb-checklist__item">
+								<input
+									type="checkbox"
+									class="gtcb-checklist__input"
+									checked={item.checked}
+									data-gtcb-index={String(index)}
+								/>
+								<span class="gtcb-checklist__text">{item.text}</span>
+							</label>
+						</li>
+					) : (
+						<li class:list={["gtcb-checklist__row gtcb-checklist__item gtcb-checklist__item--static", item.checked && "is-checked"]}>
+							<span class="gtcb-checklist__box" aria-hidden="true">
+								{item.checked && (
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="3"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										focusable="false"
+										set:html={CHECK}
+									/>
+								)}
+							</span>
+							<span class="gtcb-checklist__text">{item.text}</span>
+							<span class="gtcb-sr-only">{item.checked ? " (done)" : " (to do)"}</span>
+						</li>
+					),
+				)}
+			</ul>
+		</div>
+	)
+}
+
+<script>
+	const STORAGE_PREFIX = "gtcb-checklist:";
+
+	interface SavedState {
+		v: 1;
+		h: string;
+		c: number[];
+	}
+
+	function readStorage(key: string): string | null {
+		try {
+			return window.localStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	}
+
+	function writeStorage(key: string, value: string | null): void {
+		try {
+			if (value === null) window.localStorage.removeItem(key);
+			else window.localStorage.setItem(key, value);
+		} catch {
+			// Storage can be unavailable (private mode, blocked site data); ticks
+			// still work for the current page view.
+		}
+	}
+
+	/** Small string hash so saved ticks are discarded when the items change. */
+	function hash(value: string): string {
+		let h = 5381;
+		for (let i = 0; i < value.length; i++) h = ((h << 5) + h + value.charCodeAt(i)) | 0;
+		return (h >>> 0).toString(36);
+	}
+
+	function parseState(raw: string | null): SavedState | null {
+		if (!raw) return null;
+		try {
+			const value = JSON.parse(raw) as Partial<SavedState>;
+			if (value && value.v === 1 && typeof value.h === "string" && Array.isArray(value.c)) {
+				return value as SavedState;
+			}
+		} catch {
+			// Corrupt entry: ignore it.
+		}
+		return null;
+	}
+
+	function init(root: HTMLElement): void {
+		if (root.dataset.gtcbReady === "true") return;
+		root.dataset.gtcbReady = "true";
+
+		const inputs = Array.from(root.querySelectorAll<HTMLInputElement>("input.gtcb-checklist__input"));
+		if (inputs.length === 0) return;
+
+		const key = root.dataset.gtcbKey;
+		const storageKey = key ? STORAGE_PREFIX + key : null;
+		const signature = hash(
+			inputs.map((input) => input.closest("label")?.textContent?.trim() ?? "").join("\u241e"),
+		);
+
+		const progress = root.querySelector<HTMLElement>("[data-gtcb-progress]");
+		const doneCount = root.querySelector<HTMLElement>("[data-gtcb-done]");
+		const bar = root.querySelector<HTMLElement>("[data-gtcb-bar]");
+		const reset = root.querySelector<HTMLButtonElement>("[data-gtcb-reset]");
+
+		if (storageKey) {
+			const saved = parseState(readStorage(storageKey));
+			if (saved && saved.h === signature) {
+				inputs.forEach((input, index) => {
+					input.checked = saved.c.includes(index);
+				});
+			}
+		}
+
+		const update = (): void => {
+			const done = inputs.filter((input) => input.checked).length;
+			if (doneCount) doneCount.textContent = String(done);
+			if (bar) bar.style.setProperty("--gtcb-progress", `${Math.round((done / inputs.length) * 100)}%`);
+			root.toggleAttribute("data-gtcb-complete", done === inputs.length);
+		};
+
+		const save = (): void => {
+			if (!storageKey) return;
+			const checked = inputs.flatMap((input, index) => (input.checked ? [index] : []));
+			const state: SavedState = { v: 1, h: signature, c: checked };
+			writeStorage(storageKey, JSON.stringify(state));
+		};
+
+		for (const input of inputs) {
+			input.addEventListener("change", () => {
+				update();
+				save();
+			});
+		}
+
+		reset?.addEventListener("click", () => {
+			for (const input of inputs) input.checked = input.defaultChecked;
+			update();
+			if (storageKey) writeStorage(storageKey, null);
+			inputs[0]?.focus();
+		});
+
+		if (progress) progress.hidden = false;
+		update();
+	}
+
+	function initAll(): void {
+		document.querySelectorAll<HTMLElement>("[data-gtcb-checklist]").forEach(init);
+	}
+
+	initAll();
+	document.addEventListener("astro:page-load", initAll);
+</script>
+
+<style is:global>
+	.gtcb.gtcb-checklist {
+		padding: 20px 24px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: var(--gtcb-radius);
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__title {
+		margin-bottom: 12px;
+		font-size: var(--gtcb-fs-19);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__progress {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 8px 12px;
+		margin: 0 0 12px;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__progress[hidden] {
+		display: none;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__count {
+		margin: 0;
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__count span {
+		color: var(--gtcb-ink);
+		font-weight: 600;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__reset {
+		min-height: 44px;
+		margin: 0;
+		padding: 8px 14px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 4px;
+		background: transparent;
+		color: var(--gtcb-ink);
+		font: inherit;
+		font-size: var(--gtcb-fs-14);
+		font-weight: 600;
+		line-height: 1.2;
+		cursor: pointer;
+		transition: background-color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__reset:hover {
+		background: var(--gtcb-tint);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__reset:focus-visible {
+		outline: 3px solid var(--gtcb-accent);
+		outline-offset: 2px;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__bar {
+		grid-column: 1 / -1;
+		display: block;
+		height: 6px;
+		overflow: hidden;
+		border-radius: 3px;
+		background: var(--gtcb-tint);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__bar-fill {
+		display: block;
+		width: var(--gtcb-progress, 0%);
+		height: 100%;
+		border-radius: 3px;
+		background: var(--gtcb-accent);
+		transition: width var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__list {
+		display: grid;
+		gap: 2px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__row {
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__row::before {
+		content: none;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__item {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		min-height: 44px;
+		margin: 0 -10px;
+		padding: 10px;
+		border-radius: 8px;
+		line-height: 1.5;
+	}
+
+	.gtcb.gtcb-checklist label.gtcb-checklist__item {
+		cursor: pointer;
+		transition: background-color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-checklist label.gtcb-checklist__item:hover {
+		background: var(--gtcb-tint);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__input {
+		flex: none;
+		width: 20px;
+		height: 20px;
+		margin: 2px 0 0;
+		accent-color: var(--gtcb-accent);
+		cursor: pointer;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__input:focus-visible {
+		outline: 3px solid var(--gtcb-accent);
+		outline-offset: 2px;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__input:checked + .gtcb-checklist__text {
+		color: var(--gtcb-muted);
+		text-decoration: line-through;
+		text-decoration-thickness: 1px;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__box {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		border: 1px solid var(--gtcb-muted);
+		border-radius: 4px;
+		color: var(--gtcb-on-accent);
+	}
+
+	.gtcb.gtcb-checklist .is-checked .gtcb-checklist__box {
+		border-color: var(--gtcb-accent);
+		background: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__box svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	.gtcb.gtcb-checklist .gtcb-checklist__text {
+		min-width: 0;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-checklist {
+			padding: 18px 20px;
+		}
+	}
+</style>

@@ -1,0 +1,33 @@
+---
+/**
+ * Five-star rating with half-star precision. The fill width comes from a
+ * `data-gtcb-half` attribute (0–10) mapped in CSS, so no inline styles are
+ * needed and strict Content Security Policies keep working.
+ */
+import { formatRating, halfSteps } from "../../format.js";
+
+interface Props {
+	rating: number;
+	/** Accessible name. Defaults to "Rated X out of 5". */
+	label?: string;
+}
+
+const { rating, label } = Astro.props;
+const STAR =
+	'<path d="M12 3.2 14.7 8.8l6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/>';
+const stars = [0, 1, 2, 3, 4];
+---
+
+<span
+	class="gtcb-stars"
+	role="img"
+	aria-label={label ?? `Rated ${formatRating(rating)} out of 5`}
+	data-gtcb-half={String(halfSteps(rating))}
+>
+	<span class="gtcb-stars__row gtcb-stars__track" aria-hidden="true">
+		{stars.map(() => <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" set:html={STAR} />)}
+	</span>
+	<span class="gtcb-stars__row gtcb-stars__fill" aria-hidden="true">
+		{stars.map(() => <svg viewBox="0 0 24 24" fill="currentColor" focusable="false" set:html={STAR} />)}
+	</span>
+</span>

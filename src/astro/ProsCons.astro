@@ -1,0 +1,28 @@
+---
+/** Pros and cons: two labeled lists, side by side on wide screens. */
+import "./styles/base.css";
+
+import { normalizeProsCons } from "../normalize.js";
+import type { ProsConsBlock } from "../types.js";
+import ProsConsLists from "./parts/ProsConsLists.astro";
+
+interface Props {
+	node: ProsConsBlock;
+}
+
+const { pros, cons } = normalizeProsCons(Astro.props.node);
+---
+
+{
+	(pros.length > 0 || cons.length > 0) && (
+		<div class="gtcb not-prose gtcb-proscons">
+			<ProsConsLists pros={pros} cons={cons} />
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-proscons {
+		container-type: inline-size;
+	}
+</style>

@@ -1,0 +1,105 @@
+---
+/**
+ * Callout: tinted note with a tone icon, a text label (so tone is never
+ * conveyed by color alone), sanitized body and an optional button.
+ */
+import "./styles/base.css";
+
+import { normalizeCallout } from "../normalize.js";
+import type { CalloutBlock, CalloutTone } from "../types.js";
+import Icon from "./parts/Icon.astro";
+
+interface Props {
+	node: CalloutBlock;
+}
+
+const TONE_LABELS: Record<CalloutTone, string> = {
+	info: "Info",
+	success: "Success",
+	warning: "Warning",
+	danger: "Important",
+	tip: "Tip",
+	note: "Note",
+};
+
+const callout = normalizeCallout(Astro.props.node);
+const label = callout.label ?? TONE_LABELS[callout.tone];
+---
+
+{
+	(callout.bodyHtml || callout.cta) && (
+		<div class="gtcb not-prose gtcb-callout" data-tone={callout.tone} role="note" aria-label={label}>
+			<p class="gtcb-callout__label">
+				<Icon name={callout.tone} class="gtcb-callout__icon" />
+				<span>{label}</span>
+			</p>
+			{callout.bodyHtml && <div class="gtcb-callout__body gtcb-rich" set:html={callout.bodyHtml} />}
+			{callout.cta && (
+				<p class="gtcb-callout__cta">
+					<a class="gtcb-button" href={callout.cta.href}>{callout.cta.label}</a>
+				</p>
+			)}
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-callout {
+		--gtcb-tone: var(--gtcb-tone-info);
+		padding: 20px 24px;
+		border-radius: var(--gtcb-radius);
+		background: color-mix(in srgb, var(--gtcb-tone) 8%, var(--gtcb-surface));
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-callout[data-tone="success"] {
+		--gtcb-tone: var(--gtcb-tone-success);
+	}
+
+	.gtcb.gtcb-callout[data-tone="warning"] {
+		--gtcb-tone: var(--gtcb-tone-warning);
+	}
+
+	.gtcb.gtcb-callout[data-tone="danger"] {
+		--gtcb-tone: var(--gtcb-tone-danger);
+	}
+
+	.gtcb.gtcb-callout[data-tone="tip"] {
+		--gtcb-tone: var(--gtcb-tone-tip);
+	}
+
+	.gtcb.gtcb-callout[data-tone="note"] {
+		--gtcb-tone: var(--gtcb-tone-note);
+	}
+
+	.gtcb.gtcb-callout .gtcb-callout__label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0 0 8px;
+		color: var(--gtcb-tone);
+		font-size: var(--gtcb-fs-14);
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-callout .gtcb-callout__icon {
+		flex: none;
+		width: 20px;
+		height: 20px;
+	}
+
+	.gtcb.gtcb-callout .gtcb-callout__body {
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-callout .gtcb-callout__cta {
+		margin: 16px 0 0;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-callout {
+			padding: 18px 20px;
+		}
+	}
+</style>

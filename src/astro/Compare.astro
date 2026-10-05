@@ -1,0 +1,117 @@
+---
+/**
+ * Comparison: two to four options side by side (stacked on narrow screens).
+ * The highlighted column carries a visible "Recommended" badge, so the
+ * recommendation is not conveyed by color alone.
+ */
+import "./styles/base.css";
+
+import { normalizeCompare } from "../normalize.js";
+import type { CompareBlock } from "../types.js";
+
+interface Props {
+	node: CompareBlock;
+	/** Badge text for highlighted columns. */
+	recommendedLabel?: string;
+}
+
+const { recommendedLabel = "Recommended" } = Astro.props;
+const { columns } = normalizeCompare(Astro.props.node);
+const columnCount = String(Math.min(Math.max(columns.length, 1), 4));
+---
+
+{
+	columns.length > 0 && (
+		<div class="gtcb not-prose gtcb-compare" data-cols={columnCount}>
+			<ul class="gtcb-compare__grid">
+				{columns.map((column) => (
+					<li class:list={["gtcb-compare__col", column.highlight && "gtcb-compare__col--highlight"]}>
+						{column.highlight && <p class="gtcb-compare__badge">{recommendedLabel}</p>}
+						{column.title && <p class="gtcb-compare__title">{column.title}</p>}
+						{column.textHtml && <div class="gtcb-compare__text gtcb-rich" set:html={column.textHtml} />}
+					</li>
+				))}
+			</ul>
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-compare {
+		container-type: inline-size;
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	@container (min-width: 520px) {
+		.gtcb.gtcb-compare[data-cols="2"] .gtcb-compare__grid,
+		.gtcb.gtcb-compare[data-cols="4"] .gtcb-compare__grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@container (min-width: 640px) {
+		.gtcb.gtcb-compare[data-cols="3"] .gtcb-compare__grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+	}
+
+	@container (min-width: 880px) {
+		.gtcb.gtcb-compare[data-cols="4"] .gtcb-compare__grid {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__col {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		min-width: 0;
+		margin: 0;
+		padding: 20px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: var(--gtcb-radius);
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__col::before {
+		content: none;
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__col--highlight {
+		border-color: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__badge {
+		margin: 0 0 12px;
+		padding: 3px 8px;
+		border-radius: 4px;
+		background: var(--gtcb-accent);
+		color: var(--gtcb-on-accent);
+		font-size: var(--gtcb-fs-12);
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__title {
+		margin: 0 0 8px;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-19);
+		font-weight: 600;
+		line-height: 1.3;
+	}
+
+	.gtcb.gtcb-compare .gtcb-compare__text {
+		width: 100%;
+		font-size: var(--gtcb-fs-16);
+		overflow-wrap: anywhere;
+	}
+</style>

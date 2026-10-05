@@ -1,0 +1,320 @@
+---
+/**
+ * Product review: image, name, star rating, price, summary, feature scores,
+ * pros and cons, call to action and byline. Emits Product or
+ * SoftwareApplication JSON-LD with a single Review when `schema` is on.
+ */
+import "./styles/base.css";
+
+import { formatDate, formatPrice, formatRating, halfSteps } from "../format.js";
+import { normalizeProductReview } from "../normalize.js";
+import { buildProductReviewJsonLd } from "../schema.js";
+import type { ProductReviewBlock } from "../types.js";
+import Icon from "./parts/Icon.astro";
+import JsonLd from "./parts/JsonLd.astro";
+import ProsConsLists from "./parts/ProsConsLists.astro";
+import Stars from "./parts/Stars.astro";
+
+interface Props {
+	node: ProductReviewBlock;
+}
+
+const { node } = Astro.props;
+const review = normalizeProductReview(node);
+const locale = Astro.currentLocale;
+const price = review.price !== undefined ? formatPrice(review.price, review.currency, locale) : undefined;
+const date = formatDate(review.reviewDate, locale);
+const jsonLd = review.schema
+	? buildProductReviewJsonLd(node, { baseUrl: Astro.site ?? Astro.url })
+	: null;
+const hasProsCons = review.pros.length > 0 || review.cons.length > 0;
+const hasFooter = Boolean(review.cta || review.reviewer || date);
+---
+
+{
+	review.name && (
+		<article class="gtcb not-prose gtcb-review" aria-label={`Review: ${review.name}`}>
+			<div class:list={["gtcb-review__header", !review.image && "gtcb-review__header--no-image"]}>
+				{review.image && (
+					<img
+						class="gtcb-review__image"
+						src={review.image.src}
+						alt={review.image.alt}
+						width={review.image.width ?? 112}
+						height={review.image.height ?? 112}
+						loading="lazy"
+						decoding="async"
+					/>
+				)}
+				<div class="gtcb-review__intro">
+					{review.brand && <p class="gtcb-review__brand">{review.brand}</p>}
+					<p class="gtcb-review__name">{review.name}</p>
+					{review.rating !== undefined && (
+						<p class="gtcb-review__rating">
+							<Stars rating={review.rating} />
+							<span class="gtcb-review__score" aria-hidden="true">
+								<strong>{formatRating(review.rating)}</strong>/5
+							</span>
+						</p>
+					)}
+					{price && (
+						<p class="gtcb-review__price">
+							<span class="gtcb-review__amount">{price}</span>
+							{review.priceTerm && <span class="gtcb-review__term">{review.priceTerm}</span>}
+						</p>
+					)}
+				</div>
+			</div>
+
+			{review.summaryHtml && (
+				<div class="gtcb-review__section gtcb-review__summary gtcb-rich" set:html={review.summaryHtml} />
+			)}
+
+			{review.features.length > 0 && (
+				<div class="gtcb-review__section">
+					<p class="gtcb-review__section-title">Ratings</p>
+					<ul class="gtcb-review__features">
+						{review.features.map((feature) => (
+							<li class="gtcb-review__feature">
+								<span class="gtcb-review__feature-name">{feature.name}</span>
+								{feature.rating !== undefined && (
+									<span class="gtcb-review__feature-score">
+										{formatRating(feature.rating)}
+										<span class="gtcb-sr-only"> out of 5</span>
+									</span>
+								)}
+								{feature.rating !== undefined && (
+									<span class="gtcb-bar gtcb-review__bar" data-gtcb-half={String(halfSteps(feature.rating))} aria-hidden="true">
+										<span class="gtcb-bar__fill" />
+									</span>
+								)}
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+
+			{hasProsCons && (
+				<div class="gtcb-review__section">
+					<ProsConsLists pros={review.pros} cons={review.cons} nested />
+				</div>
+			)}
+
+			{hasFooter && (
+				<div class="gtcb-review__section gtcb-review__footer">
+					{review.cta && (
+						<a
+							class="gtcb-button"
+							href={review.cta.href}
+							rel={review.cta.rel}
+							target={review.cta.newTab ? "_blank" : undefined}
+						>
+							<span>{review.cta.label}</span>
+							{review.cta.newTab && <Icon name="external" class="gtcb-button__icon" size={16} />}
+							{review.cta.newTab && <span class="gtcb-sr-only">(opens in a new tab)</span>}
+						</a>
+					)}
+					{(review.reviewer || date) && (
+						<p class="gtcb-review__byline">
+							{review.reviewer ? "Reviewed by " : "Reviewed "}
+							{review.reviewer && <span class="gtcb-review__reviewer">{review.reviewer}</span>}
+							{date && (date.iso ? <> on <time datetime={date.iso}>{date.label}</time></> : <> on {date.label}</>)}
+						</p>
+					)}
+				</div>
+			)}
+
+			{jsonLd && <JsonLd data={jsonLd} />}
+		</article>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-review {
+		container-type: inline-size;
+		overflow: hidden;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 14px;
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-review .gtcb-review__header {
+		display: grid;
+		grid-template-columns: 112px minmax(0, 1fr);
+		align-items: center;
+		gap: 20px;
+		padding: 24px;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__header--no-image {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.gtcb.gtcb-review .gtcb-review__image {
+		display: block;
+		width: 112px;
+		height: 112px;
+		margin: 0;
+		padding: 8px;
+		border-radius: 10px;
+		background: var(--gtcb-tint);
+		object-fit: contain;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__intro {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-width: 0;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__intro > p {
+		margin: 0;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__brand {
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__name {
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-21);
+		font-weight: 600;
+		line-height: 1.3;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__rating {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__score {
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		line-height: 1;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__score strong {
+		color: var(--gtcb-ink);
+		font-weight: 600;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__price {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 4px;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__amount {
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-19);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__term {
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+	}
+
+	.gtcb.gtcb-review .gtcb-review__section {
+		margin: 0;
+		padding: 20px 24px;
+		border-top: 1px solid var(--gtcb-hairline);
+	}
+
+	.gtcb.gtcb-review .gtcb-review__section-title {
+		margin: 0 0 12px;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__features {
+		display: grid;
+		gap: 14px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__feature {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 6px 12px;
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__feature::before {
+		content: none;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__feature-name {
+		font-size: var(--gtcb-fs-14);
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__feature-score {
+		font-size: var(--gtcb-fs-14);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__bar {
+		grid-column: 1 / -1;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__footer {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px 20px;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__byline {
+		margin: 0;
+		color: var(--gtcb-muted);
+		font-size: var(--gtcb-fs-14);
+		line-height: 1.45;
+	}
+
+	.gtcb.gtcb-review .gtcb-review__reviewer {
+		color: var(--gtcb-ink);
+		font-weight: 600;
+	}
+
+	@container (max-width: 459.98px) {
+		.gtcb.gtcb-review .gtcb-review__header {
+			grid-template-columns: 80px minmax(0, 1fr);
+			gap: 16px;
+			padding: 20px;
+		}
+
+		.gtcb.gtcb-review .gtcb-review__header--no-image {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.gtcb.gtcb-review .gtcb-review__image {
+			width: 80px;
+			height: 80px;
+		}
+
+		.gtcb.gtcb-review .gtcb-review__section {
+			padding: 18px 20px;
+		}
+
+		.gtcb.gtcb-review .gtcb-review__footer .gtcb-button {
+			width: 100%;
+		}
+	}
+</style>

@@ -1,0 +1,61 @@
+{
+	"name": "@gatilab/emdash-content-blocks",
+	"version": "0.1.0",
+	"description": "Editorial Portable Text blocks for EmDash: FAQ, callout, expert opinion, stats, product review, pros and cons, comparison, checklist, social thread and related links. Ships editor definitions, Astro renderers and JSON-LD.",
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./astro": "./src/astro/index.ts",
+		"./styles/base.css": "./src/astro/styles/base.css",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"SCHEMAS.md",
+		"CHANGELOG.md"
+	],
+	"sideEffects": [
+		"**/*.css",
+		"**/*.astro"
+	],
+	"keywords": [
+		"emdash",
+		"emdash-plugin",
+		"astro",
+		"astro-component",
+		"portable-text",
+		"faq",
+		"product-review",
+		"pros-and-cons",
+		"checklist",
+		"json-ld",
+		"schema-org"
+	],
+	"author": "Gatilab",
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit && astro check --root . --tsconfig ./tsconfig.json",
+		"prepublishOnly": "pnpm typecheck && pnpm test"
+	},
+	"peerDependencies": {
+		"astro": "^7.0.0",
+		"emdash": "^1.1.0"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.10",
+		"@astrojs/react": "^6.0.5",
+		"astro": "^7.3.2",
+		"emdash": "^1.1.0",
+		"react": "19.2.4",
+		"react-dom": "19.2.4",
+		"typescript": "^6.0.3",
+		"vitest": "4.1.10"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

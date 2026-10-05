@@ -1,0 +1,175 @@
+---
+/**
+ * FAQ: one native <details> panel per question (no JavaScript). Emits
+ * FAQPage JSON-LD when the block's `schema` toggle is on.
+ */
+import "./styles/base.css";
+
+import { normalizeFaq } from "../normalize.js";
+import { buildFaqJsonLd } from "../schema.js";
+import type { FaqBlock } from "../types.js";
+import JsonLd from "./parts/JsonLd.astro";
+
+interface Props {
+	node: FaqBlock;
+}
+
+const { node } = Astro.props;
+const faq = normalizeFaq(node);
+const jsonLd = faq.schema ? buildFaqJsonLd(node) : null;
+---
+
+{
+	faq.items.length > 0 && (
+		<div class="gtcb not-prose gtcb-faq">
+			{faq.title && <p class="gtcb-heading gtcb-faq__title">{faq.title}</p>}
+			<div class="gtcb-faq__list">
+				{faq.items.map((item) => (
+					<details class="gtcb-faq__item">
+						<summary class="gtcb-faq__summary">
+							<span class="gtcb-faq__question">{item.question}</span>
+							<span class="gtcb-faq__toggle" aria-hidden="true" />
+						</summary>
+						{item.answerHtml && <div class="gtcb-faq__answer gtcb-rich" set:html={item.answerHtml} />}
+					</details>
+				))}
+			</div>
+			{jsonLd && <JsonLd data={jsonLd} />}
+		</div>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-faq .gtcb-faq__list {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__item {
+		margin: 0;
+		padding: 0;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 10px;
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+		transition: border-color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__item[open] {
+		border-color: color-mix(in srgb, var(--gtcb-accent) 45%, var(--gtcb-hairline));
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		min-height: 68px;
+		margin: 0;
+		padding: 20px 24px;
+		border-radius: 9px;
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1.45;
+		color: var(--gtcb-ink);
+		list-style: none;
+		cursor: pointer;
+		transition: background-color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__summary::marker {
+		content: "";
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__summary:hover {
+		background: var(--gtcb-accent-soft);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__summary:focus-visible {
+		outline: 3px solid var(--gtcb-accent);
+		outline-offset: 3px;
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__item[open] > .gtcb-faq__summary {
+		border-bottom: 1px solid color-mix(in srgb, var(--gtcb-accent) 25%, var(--gtcb-hairline));
+		border-radius: 9px 9px 0 0;
+		background: var(--gtcb-accent-soft);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__question {
+		min-width: 0;
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__toggle {
+		position: relative;
+		flex: none;
+		width: 28px;
+		height: 28px;
+		border: 1px solid var(--gtcb-hairline);
+		border-radius: 6px;
+		background: var(--gtcb-surface);
+		color: var(--gtcb-ink);
+		transition:
+			background-color var(--gtcb-ease),
+			border-color var(--gtcb-ease),
+			color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__toggle::before,
+	.gtcb.gtcb-faq .gtcb-faq__toggle::after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 10px;
+		height: 2px;
+		margin: -1px 0 0 -5px;
+		border-radius: 1px;
+		background: currentColor;
+		transition: transform var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__toggle::after {
+		transform: rotate(90deg);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__item[open] .gtcb-faq__toggle {
+		border-color: var(--gtcb-accent);
+		background: var(--gtcb-accent);
+		color: var(--gtcb-on-accent);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__item[open] .gtcb-faq__toggle::after {
+		transform: rotate(0deg);
+	}
+
+	.gtcb.gtcb-faq .gtcb-faq__answer {
+		padding: 20px 24px 24px;
+		line-height: 1.7;
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-faq .gtcb-faq__summary {
+			padding: 18px 20px;
+		}
+
+		.gtcb.gtcb-faq .gtcb-faq__answer {
+			padding: 18px 20px 20px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gtcb.gtcb-faq .gtcb-faq__item,
+		.gtcb.gtcb-faq .gtcb-faq__summary,
+		.gtcb.gtcb-faq .gtcb-faq__toggle,
+		.gtcb.gtcb-faq .gtcb-faq__toggle::before,
+		.gtcb.gtcb-faq .gtcb-faq__toggle::after {
+			transition: none;
+		}
+	}
+</style>

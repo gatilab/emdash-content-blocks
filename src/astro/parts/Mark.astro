@@ -1,0 +1,23 @@
+---
+/** Check or cross mark drawn in currentColor. Decorative: pair it with text. */
+interface Props {
+	kind: "positive" | "negative";
+	class?: string;
+}
+
+const { kind, class: className } = Astro.props;
+const path = kind === "positive" ? '<path d="m4.5 12.5 4.5 4.5 10-10"/>' : '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>';
+---
+
+<span class:list={["gtcb-mark", `gtcb-mark--${kind}`, className]} aria-hidden="true">
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2.25"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		focusable="false"
+		set:html={path}
+	/>
+</span>

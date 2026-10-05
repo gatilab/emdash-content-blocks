@@ -1,0 +1,134 @@
+---
+/** Related links: a short, titled list of further reading. */
+import "./styles/base.css";
+
+import { normalizeRelatedLinks } from "../normalize.js";
+import type { RelatedLinksBlock } from "../types.js";
+import Icon from "./parts/Icon.astro";
+
+interface Props {
+	node: RelatedLinksBlock;
+	/** Accessible name used when the block has no title. */
+	fallbackLabel?: string;
+}
+
+const { fallbackLabel = "Related links" } = Astro.props;
+const { title, links } = normalizeRelatedLinks(Astro.props.node);
+---
+
+{
+	links.length > 0 && (
+		<nav class="gtcb not-prose gtcb-related" aria-label={title ?? fallbackLabel}>
+			{title && <p class="gtcb-related__title">{title}</p>}
+			<ul class="gtcb-related__list">
+				{links.map((link) => (
+					<li class="gtcb-related__item">
+						<a class="gtcb-related__link" href={link.href}>
+							<span class="gtcb-related__text">{link.title}</span>
+							<Icon name="arrow" class="gtcb-related__arrow" size={16} />
+						</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	)
+}
+
+<style is:global>
+	.gtcb.gtcb-related {
+		padding: 20px 24px;
+		border-radius: var(--gtcb-radius);
+		background: var(--gtcb-tint);
+		color: var(--gtcb-ink);
+	}
+
+	.gtcb.gtcb-related .gtcb-related__title {
+		margin: 0 0 4px;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.gtcb.gtcb-related .gtcb-related__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gtcb.gtcb-related .gtcb-related__item {
+		margin: 0;
+		padding: 0;
+	}
+
+	.gtcb.gtcb-related .gtcb-related__item + .gtcb-related__item {
+		border-top: 1px solid var(--gtcb-hairline);
+	}
+
+	.gtcb.gtcb-related .gtcb-related__item::before {
+		content: none;
+	}
+
+	.gtcb.gtcb-related a.gtcb-related__link {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-height: 44px;
+		padding: 10px 0;
+		color: var(--gtcb-ink);
+		font-size: var(--gtcb-fs-16);
+		line-height: 1.45;
+		text-decoration: none;
+	}
+
+	.gtcb.gtcb-related a.gtcb-related__link::before {
+		content: "";
+		flex: none;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-related .gtcb-related__text {
+		flex: 1 1 auto;
+		min-width: 0;
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.2em;
+		transition: text-decoration-color var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-related a.gtcb-related__link:hover .gtcb-related__text {
+		text-decoration-color: var(--gtcb-accent);
+	}
+
+	.gtcb.gtcb-related a.gtcb-related__link:focus-visible {
+		outline: 3px solid var(--gtcb-accent);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
+	.gtcb.gtcb-related .gtcb-related__arrow {
+		flex: none;
+		color: var(--gtcb-muted);
+		transition: transform var(--gtcb-ease);
+	}
+
+	.gtcb.gtcb-related a.gtcb-related__link:hover .gtcb-related__arrow {
+		transform: translateX(2px);
+	}
+
+	@media (max-width: 639.98px) {
+		.gtcb.gtcb-related {
+			padding: 16px 20px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gtcb.gtcb-related a.gtcb-related__link:hover .gtcb-related__arrow {
+			transform: none;
+		}
+	}
+</style>
