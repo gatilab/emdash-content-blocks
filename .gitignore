@@ -1,4 +1,6 @@
 node_modules/
+dist/
+coverage/
 .astro/
-.smoke/
-*.tgz
+*.tsbuildinfo
+.DS_Store
