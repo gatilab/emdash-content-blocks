@@ -207,4 +207,4 @@ The package publishes its TypeScript and `.astro` source; the host site's Vite b
 
 ## License
 
-GPL-2.0-or-later. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](./LICENSE).
