@@ -1,6 +1,6 @@
 {
 	"name": "@gatilab/emdash-content-blocks",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Editorial Portable Text blocks for EmDash: FAQ, callout, expert opinion, stats, product review, pros and cons, comparison, checklist, social thread and related links. Ships editor definitions, Astro renderers and JSON-LD.",
 	"type": "module",
 	"main": "./src/index.ts",

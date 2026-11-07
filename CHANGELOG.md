@@ -2,6 +2,10 @@
 
 All notable changes to `@gatilab/emdash-content-blocks` are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## 0.1.1 (2026-11-07)
+
+- Relicensed under the MIT License (previously GPL-2.0-or-later).
+
 ## 0.1.0 - 2026-10-05
 
 Initial release.

@@ -28,7 +28,7 @@ import { getBlockDefinitions } from "./blocks.js";
 import type { BlockDefinitionOptions } from "./blocks.js";
 
 export const PLUGIN_ID = "gt-content-blocks";
-export const PLUGIN_VERSION = "0.1.0";
+export const PLUGIN_VERSION = "0.1.1";
 export const PACKAGE_NAME = "@gatilab/emdash-content-blocks";
 
 /** Options accepted by {@link contentBlocks} and passed through to {@link createPlugin}. */

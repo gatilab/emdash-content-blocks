@@ -21,7 +21,7 @@ describe("descriptor", () => {
 	it("returns a native descriptor with the components entry", () => {
 		expect(contentBlocks()).toEqual({
 			id: "gt-content-blocks",
-			version: "0.1.0",
+			version: "0.1.1",
 			format: "native",
 			entrypoint: "@gatilab/emdash-content-blocks",
 			componentsEntry: "@gatilab/emdash-content-blocks/astro",
